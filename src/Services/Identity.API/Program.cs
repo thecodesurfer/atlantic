@@ -1,5 +1,9 @@
+using Atlantic.Services.Identity.API;
+using Atlantic.Services.Identity.API.Data;
+using Atlantic.Services.Identity.API.Models;
 using Microsoft.AspNetCore.Authentication.Cookies;
 using Microsoft.AspNetCore.Identity;
+using Microsoft.EntityFrameworkCore;
 using Microsoft.IdentityModel.Logging;
 using Quartz;
 using static OpenIddict.Abstractions.OpenIddictConstants;
@@ -9,8 +13,19 @@ var builder = WebApplication.CreateBuilder(args);
 builder.Services.AddControllersWithViews();
 builder.Services.AddRazorPages();
 
-builder.Services.AddIdentity<IdentityUser, IdentityRole>()
-    .AddDefaultTokenProviders();
+builder.Services.AddDbContext<ApplicationDbContext>(options =>
+{
+    options.UseSqlServer(builder.Configuration.GetConnectionString("DefaultConnection"));
+
+    options.UseOpenIddict();
+});
+
+builder.Services.AddDatabaseDeveloperPageExceptionFilter();
+
+builder.Services.AddIdentity<ApplicationUser, ApplicationRole>()
+    .AddEntityFrameworkStores<ApplicationDbContext>()
+    .AddDefaultTokenProviders()
+    .AddDefaultUI();
 
 builder.Services.AddDistributedMemoryCache();
 
@@ -50,6 +65,9 @@ builder.Services.AddAuthentication(CookieAuthenticationDefaults.AuthenticationSc
 builder.Services.AddOpenIddict()
     .AddCore(options =>
     {
+        options.UseEntityFrameworkCore()
+               .UseDbContext<ApplicationDbContext>();
+
         options.UseQuartz();
     })
     .AddServer(options =>
@@ -72,6 +90,8 @@ builder.Services.AddOpenIddict()
                .EnableAuthorizationEndpointPassthrough()
                .EnableTokenEndpointPassthrough()
                .EnableStatusCodePagesIntegration();
+
+        options.DisableAccessTokenEncryption();
     })
     .AddValidation(options =>
     {
@@ -79,6 +99,7 @@ builder.Services.AddOpenIddict()
         options.UseAspNetCore();
     });
 
+builder.Services.AddHostedService<Worker>();
 
 var app = builder.Build();
 

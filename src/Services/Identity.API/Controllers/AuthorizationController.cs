@@ -1,4 +1,5 @@
 ﻿using Atlantic.Services.Identity.API.Helpers;
+using Atlantic.Services.Identity.API.Models;
 using Atlantic.Services.Identity.API.ViewModels.Authorization;
 using Microsoft.AspNetCore;
 using Microsoft.AspNetCore.Authentication;
@@ -14,11 +15,20 @@ namespace Atlantic.Services.Identity.API.Controllers;
 
 public class AuthorizationController : Controller
 {
-    private readonly UserManager<IdentityUser> _userManager;
-    private readonly SignInManager<IdentityUser> _signInManager;
+    private readonly UserManager<ApplicationUser> _userManager;
+    private readonly SignInManager<ApplicationUser> _signInManager;
     private readonly IOpenIddictApplicationManager _applicationManager;
     private readonly IOpenIddictAuthorizationManager _authorizationManager;
     private readonly IOpenIddictScopeManager _scopeManager;
+
+    public AuthorizationController(UserManager<ApplicationUser> userManager, SignInManager<ApplicationUser> signInManager, IOpenIddictApplicationManager applicationManager, IOpenIddictAuthorizationManager authorizationManager, IOpenIddictScopeManager scopeManager)
+    {
+        _userManager = userManager;
+        _signInManager = signInManager;
+        _applicationManager = applicationManager;
+        _authorizationManager = authorizationManager;
+        _scopeManager = scopeManager;
+    }
 
     [HttpGet("~/connect/authorize")]
     [HttpPost("~/connect/authorize")]
