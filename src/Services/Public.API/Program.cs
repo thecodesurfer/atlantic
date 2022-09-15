@@ -1,7 +1,4 @@
-using Atlantic.Services.Public.API.Controllers;
-using Atlantic.Services.Public.API.Filters;
-using Microsoft.AspNetCore.Authorization;
-using Microsoft.Net.Http.Headers;
+using Atlantic.Services.Public.API.Helpers;
 using Microsoft.OpenApi.Models;
 using OpenIddict.Validation.AspNetCore;
 
@@ -38,6 +35,16 @@ builder.Services.AddSwaggerGen(options =>
         Title = "Atlantic API",
         Version = "v1",
     });
+
+    options.OperationFilter<SwaggerParameterFilters>();
+    options.DocumentFilter<SwaggerVersionMapping>();
+});
+
+builder.Services.AddApiVersioning(options =>
+{
+    options.DefaultApiVersion = new Microsoft.AspNetCore.Mvc.ApiVersion(1, 0);
+    options.AssumeDefaultVersionWhenUnspecified = true;
+    options.ReportApiVersions = true;
 });
 
 var app = builder.Build();
