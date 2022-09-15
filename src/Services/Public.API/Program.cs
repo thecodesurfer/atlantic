@@ -1,5 +1,7 @@
 using Atlantic.Services.Public.API.Controllers;
+using Atlantic.Services.Public.API.Filters;
 using Microsoft.AspNetCore.Authorization;
+using Microsoft.Net.Http.Headers;
 using Microsoft.OpenApi.Models;
 using OpenIddict.Validation.AspNetCore;
 
@@ -28,16 +30,6 @@ builder.Services.AddOpenIddict()
         options.UseAspNetCore();
     });
 
-builder.Services.AddScoped<IAuthorizationHandler, RequireScopeHandler>();
-
-builder.Services.AddAuthorization(options =>
-{
-    options.AddPolicy("apiPolicy", p =>
-    {
-        p.Requirements.Add(new RequireScope());
-    });
-});
-
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen(options =>
 {
@@ -53,8 +45,12 @@ var app = builder.Build();
 app.UseSwagger();
 app.UseSwaggerUI(options =>
 {
-    options.SwaggerEndpoint("/swagger/v1/swagger.json", "Atlantic API V1");
     options.RoutePrefix = string.Empty;
+    
+    options.SwaggerEndpoint("/swagger/v1/swagger.json", "Atlantic API V1");
+
+    options.OAuthClientId("55923010-A09A-4748-B027-F2AD83663A37");
+    options.OAuthUsePkce();
 });
 
 app.UseExceptionHandler("/Home/Error");
