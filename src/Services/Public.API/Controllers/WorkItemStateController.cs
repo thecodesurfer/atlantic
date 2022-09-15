@@ -7,12 +7,12 @@ namespace Atlantic.Services.Public.API.Controllers;
 [Authorize]
 [ApiController]
 [ApiVersion("1.0")]
-[Route("api/v{version:apiVersion}/workitems")]
-public class WorkItemController : ControllerBase
+[Route("api/v{version:apiVersion}/workitem-states")]
+public class WorkItemStateController : ControllerBase
 {
     [HttpGet]
-    [ProducesResponseType(StatusCodes.Status200OK, Type = typeof(List<WorkItem>))]
-    public IActionResult GetWorkItems()
+    [ProducesResponseType(StatusCodes.Status200OK, Type = typeof(List<WorkItemType>))]
+    public IActionResult GetWorkItemStates()
     {
         throw new NotImplementedException();
     }
