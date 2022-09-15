@@ -10,6 +10,8 @@ using static OpenIddict.Abstractions.OpenIddictConstants;
 
 var builder = WebApplication.CreateBuilder(args);
 
+builder.Services.AddLogging(options => options.AddDebug());
+
 builder.Services.AddControllersWithViews();
 builder.Services.AddRazorPages();
 
@@ -18,6 +20,9 @@ builder.Services.AddDbContext<ApplicationDbContext>(options =>
     options.UseSqlServer(builder.Configuration.GetConnectionString("DefaultConnection"));
 
     options.UseOpenIddict();
+
+    options.EnableDetailedErrors();
+    options.EnableSensitiveDataLogging();
 });
 
 builder.Services.AddDatabaseDeveloperPageExceptionFilter();
@@ -47,7 +52,7 @@ builder.Services.Configure<IdentityOptions>(options =>
     options.ClaimsIdentity.RoleClaimType = Claims.Role;
     options.ClaimsIdentity.EmailClaimType = Claims.Email;
 
-    options.SignIn.RequireConfirmedAccount = true;
+    options.SignIn.RequireConfirmedAccount = false;
 });
 
 builder.Services.AddQuartz(options =>
@@ -73,25 +78,29 @@ builder.Services.AddOpenIddict()
     .AddServer(options =>
     {
         options.SetAuthorizationEndpointUris("/connect/authorize")
-               .SetTokenEndpointUris("/connect/token");
+               .SetTokenEndpointUris("/connect/token")
+               .SetIntrospectionEndpointUris("/connect/introspect")
+               .SetUserinfoEndpointUris("/connect/userinfo")
+               .SetVerificationEndpointUris("/connect/verify");
 
         options.AllowAuthorizationCodeFlow()
-               .AllowRefreshTokenFlow();
+               .AllowRefreshTokenFlow()
+               .AllowClientCredentialsFlow();
 
         options.RegisterScopes(
             Scopes.Email,
             Scopes.Profile,
-            Scopes.Roles);
+            Scopes.Roles,
+            "api");
 
         options.AddDevelopmentEncryptionCertificate()
-                .AddDevelopmentSigningCertificate();
+               .AddDevelopmentSigningCertificate();
 
         options.UseAspNetCore()
                .EnableAuthorizationEndpointPassthrough()
                .EnableTokenEndpointPassthrough()
+               .EnableUserinfoEndpointPassthrough()
                .EnableStatusCodePagesIntegration();
-
-        options.DisableAccessTokenEncryption();
     })
     .AddValidation(options =>
     {

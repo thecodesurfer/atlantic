@@ -1,7 +1,6 @@
-﻿using Microsoft.AspNetCore.Mvc;
-using Microsoft.AspNetCore.Mvc.RazorPages;
+﻿using Microsoft.AspNetCore.Mvc.RazorPages;
 
-namespace Identity.API.Pages;
+namespace Atlantic.Services.Identity.API.Pages;
 
 public class IndexModel : PageModel
 {

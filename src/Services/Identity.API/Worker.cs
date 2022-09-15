@@ -1,6 +1,5 @@
 ﻿using Atlantic.Services.Identity.API.Data;
 using OpenIddict.Abstractions;
-using System.Globalization;
 using static OpenIddict.Abstractions.OpenIddictConstants;
 
 namespace Atlantic.Services.Identity.API;
@@ -51,12 +50,14 @@ public class Worker : IHostedService
                         Permissions.Endpoints.Logout,
                         Permissions.Endpoints.Token,
                         Permissions.Endpoints.Revocation,
+                        Permissions.Endpoints.Introspection,
                         Permissions.GrantTypes.AuthorizationCode,
                         Permissions.GrantTypes.RefreshToken,
                         Permissions.ResponseTypes.Code,
                         Permissions.Scopes.Email,
                         Permissions.Scopes.Profile,
-                        Permissions.Scopes.Roles
+                        Permissions.Scopes.Roles,
+                        Permissions.Prefixes.Scope + "api"
                     },
                     Requirements =
                     {
@@ -64,11 +65,38 @@ public class Worker : IHostedService
                     }
                 });
             }
+            
+            // Atlantic API
+            if (await manager.FindByClientIdAsync("rs_atlanticApi") is null)
+            {
+                await manager.CreateAsync(new OpenIddictApplicationDescriptor
+                {
+                    ClientId = "rs_atlanticApi",
+                    ClientSecret = "159CF32B-08D9-4424-8924-91B2E6DD2882",
+                    Permissions =
+                    {
+                        Permissions.Endpoints.Introspection,
+                    }
+                });
+            }
         }
 
         static async Task RegisterScopesAsync(IServiceProvider provider)
         {
+            var manager = provider.GetRequiredService<IOpenIddictScopeManager>();
 
+            if (await manager.FindByNameAsync("api") is null)
+            {
+                await manager.CreateAsync(new OpenIddictScopeDescriptor
+                {
+                    DisplayName = "Atlantic API access",
+                    Name = "api",
+                    Resources =
+                    {
+                        "rs_atlanticApi"
+                    }
+                });
+            }
         }
     }
 

@@ -6,6 +6,7 @@ using Microsoft.AspNetCore.Authentication;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.Primitives;
+using Microsoft.IdentityModel.Tokens;
 using OpenIddict.Abstractions;
 using OpenIddict.Server.AspNetCore;
 using System.Security.Claims;
@@ -186,7 +187,43 @@ public class AuthorizationController : Controller
             return await HandleExchangeCodeGrantType();
         }
 
+        if (request.IsClientCredentialsGrantType())
+        {
+            return await HandleExchangeCodeGrantType(request);
+        }
+
         throw new InvalidOperationException("The specified grant type is not supported.");
+    }
+
+    private async Task<IActionResult> HandleExchangeCodeGrantType(OpenIddictRequest request)
+    {
+        var application = await _applicationManager.FindByClientIdAsync(request.ClientId);
+        if (application == null)
+        {
+            throw new InvalidOperationException("The application details cannot be found in the database.");
+        }
+
+        // Create the claims-based identity that will be used by OpenIddict to generate tokens.
+        var identity = new ClaimsIdentity(
+            authenticationType: TokenValidationParameters.DefaultAuthenticationType,
+            nameType: Claims.Name,
+            roleType: Claims.Role);
+
+        // Add the claims that will be persisted in the tokens (use the client_id as the subject identifier).
+        identity.AddClaim(Claims.Subject, await _applicationManager.GetClientIdAsync(application));
+        identity.AddClaim(Claims.Name, await _applicationManager.GetDisplayNameAsync(application));
+
+        // Set the list of scopes granted to the client application in access_token.
+        var principal = new ClaimsPrincipal(identity);
+        principal.SetScopes(request.GetScopes());
+        principal.SetResources(await _scopeManager.ListResourcesAsync(principal.GetScopes()).ToListAsync());
+
+        foreach (var claim in principal.Claims)
+        {
+            claim.SetDestinations(GetDestinations(claim, principal));
+        }
+
+        return SignIn(principal, OpenIddictServerAspNetCoreDefaults.AuthenticationScheme);
     }
 
     private async Task<IActionResult> HandleExchangeCodeGrantType()
